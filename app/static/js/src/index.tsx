@@ -1,9 +1,12 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { StoreProvider } from "./Store";
+import App from "./App";
 
-
-const App: React.SFC = () => {
-    return <h1>React and Flask!!!</h1>;
-};
-
-ReactDOM.render(<App />, document.getElementById("root") as HTMLElement);
+const root = document.getElementById("root");
+ReactDOM.render(
+  <StoreProvider>
+    <App />
+  </StoreProvider>,
+  root
+);
