@@ -2,11 +2,16 @@ import * as React from "react";
 import { Badge, ButtonGroup } from "reactstrap";
 import { Store } from "../Store";
 
-export function NoteTag(tag: string) {
+export interface ITag {
+  tag: string;
+}
+
+export function NoteTag(props: ITag) {
   const { state, dispatch } = React.useContext(Store);
 
-  const getNotesByTag = async () => {
-    const URL = "/api/1/tags/" + tag;
+  const getNotesByTag = async (e: any) => {
+    e.preventDefault;
+    const URL = "/api/1/notes/tags/" + props.tag;
     const data = await fetch(URL);
     const dataJSON = await data.json();
     return dispatch({
@@ -17,7 +22,7 @@ export function NoteTag(tag: string) {
 
   return (
     <span className="mb-2">
-      <Badge onClick={getNotesByTag}>{tag}</Badge>
+      <Badge onClick={getNotesByTag}>{props.tag}</Badge>
     </span>
   );
 }

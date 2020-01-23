@@ -136,6 +136,8 @@ class Note(GraphObject):
        
         resources = graph.run(query).data()
         has_next = len(resources) >= limit
+        if has_next:
+            resources = resources[:-1]
 
         data = {
             'data': [
