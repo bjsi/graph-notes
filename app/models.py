@@ -77,7 +77,20 @@ class Note(GraphObject):
                  .match(graph)
                  .where("_.archived = false"))
         return notes
-    
+
+    @staticmethod
+    def get_tags(id):
+        """
+        Get tags by id
+        """
+        query = f"""
+                 MATCH (n: Note)<-[:TAGGED]-(t: Tag) 
+                 WHERE n.id = \'{id}\'
+                 RETURN collect(t.text) AS tags
+                 """
+        tags = graph.evaluate(query)
+        return tags if tags else []
+        
     @staticmethod
     def to_dict(note):
         """
@@ -88,9 +101,7 @@ class Note(GraphObject):
             'content': note.get("content"),
             'createdAt': note.get("createdAt"),
             'archived': note.get("archived"),
-            'tags': [
-                x.text for x in list(note.get("tags"))
-            ]
+            'tags': Note.get_tags(note.get("id"))
         }
         return data
 
@@ -104,7 +115,7 @@ class Note(GraphObject):
         """ Paginate a collection of notes.
 
         Uses Cypher as opposed to the limited py2neo ogm.
-        Therefore you can't use it as a method of a Note GraphObject (annoyingly)
+        Therefore you can't use it as a method of a Note GraphObject
 
         :query: The base query.
         :page: The page number to get.
@@ -120,8 +131,8 @@ class Note(GraphObject):
 
         # Add pagination clauses to the base query
         query = (query +
-                 " LIMIT " + str(limit) +
-                 " SKIP " + str(skip))
+                 " SKIP " + str(skip) +
+                 " LIMIT " + str(limit))
        
         resources = graph.run(query).data()
         has_next = len(resources) >= limit
