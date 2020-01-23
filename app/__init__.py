@@ -19,7 +19,7 @@ def create_app():
 
     with app.app_context():
         from . import views
-        from app.api import blueprint as api
+        from app.api.api_models import blueprint as api
         app.register_blueprint(api, url_prefix='/api/1')
         # create_uniqueness_constraint("Note", "id")
         # create_uniqueness_constraint("Tag", "tag")

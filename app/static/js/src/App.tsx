@@ -5,6 +5,16 @@ import CardColumns from "reactstrap/lib/CardColumns";
 import { Editor } from "./components/Editor";
 import { Store } from "./Store";
 import { Pagination } from "./components/Pagination";
+import { INote } from "./interfaces/Note.interfaces";
+import {
+  CardHeader,
+  Card,
+  CardFooter,
+  CardBody,
+  Button,
+  Container
+} from "reactstrap";
+import { Note } from "./components/Note";
 
 export default function App(): JSX.Element {
   const { state, dispatch } = React.useContext(Store);
@@ -23,9 +33,17 @@ export default function App(): JSX.Element {
   return (
     <div>
       <Editor />
-      <CardColumns>
-        <NoteList />
-      </CardColumns>
+      <Container>
+        <CardColumns>
+          {state.notes.map((note: INote) => {
+            return (
+              <section key={note.id}>
+                <Note {...note} />
+              </section>
+            );
+          })}
+        </CardColumns>
+      </Container>
       <Pagination />
     </div>
   );

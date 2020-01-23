@@ -6,8 +6,11 @@ from flask import url_for
 
 
 class Note(GraphObject):
-    """
-    A note
+    """ Represents a single note in the graph.
+
+    Note class uses py2neo's OGM.
+    Can only be used to add Notes and do simple queries.
+    More complex queries (those involving relationship) must be done with cypher.
     """
     __primarykey__ = "id"
 
@@ -37,6 +40,8 @@ class Note(GraphObject):
     def add_child(self, child):
         """
         Creates both sides of the parent <---> child relationship
+
+        TODO Change this to allow "Note merging"
         Only one child permitted.
         """
         if self.archived is True:
@@ -63,22 +68,6 @@ class Note(GraphObject):
         """
         graph.pull(self)
 
-    def to_dict(self):
-        """
-        Return Note as a dictionary object
-        """
-        data = {
-            'id': self.id,
-            'content': self.content,
-            'createdAt': self.createdAt,
-            'archived': self.archived,
-            'tags': [
-                x.text for x in list(self.tags)
-            ]
-        }
-
-        return data
-
     @classmethod
     def public(cls):
         """
@@ -90,8 +79,32 @@ class Note(GraphObject):
         return notes
     
     @staticmethod
-    def to_collection_dict(query: str, page: int, per_page: int, endpoint: str, **kwargs):
+    def to_dict(note):
+        """
+        Cypher Note record as a dictionary object
+        """
+        data = {
+            'id': note.get("id"),
+            'content': note.get("content"),
+            'createdAt': note.get("createdAt"),
+            'archived': note.get("archived"),
+            'tags': [
+                x.text for x in list(note.get("tags"))
+            ]
+        }
+        return data
+
+    @staticmethod
+    def to_collection_dict(query: str,
+                           query_key: str,
+                           page: int,
+                           per_page: int,
+                           endpoint: str,
+                           **kwargs):
         """ Paginate a collection of notes.
+
+        Uses Cypher as opposed to the limited py2neo ogm.
+        Therefore you can't use it as a method of a Note GraphObject (annoyingly)
 
         :query: The base query.
         :page: The page number to get.
@@ -100,21 +113,22 @@ class Note(GraphObject):
         """
 
         # Pagination variables
+        # Query one more than the query asks for to see if there is a next page
+        # If the number of resources returned < per_page, it is the last page
         skip = (page * per_page) - per_page
         limit = per_page + 1
 
-        # Build up from the base query
-        query = query.limit(limit).skip(skip)
-
-        resources = list(query)
+        # Add pagination clauses to the base query
+        query = (query +
+                 " LIMIT " + str(limit) +
+                 " SKIP " + str(skip))
+       
+        resources = graph.run(query).data()
         has_next = len(resources) >= limit
-
-        # Query one more than the query asks for to see if there is a next page
-        # If the number of resources returned < per_page, it is the last page
 
         data = {
             'data': [
-                item.to_dict()
+                Note.to_dict(item[query_key])
                 for item in resources
             ],
             "_meta": {
@@ -123,9 +137,9 @@ class Note(GraphObject):
             },
             "_links": {
                 "currentPageEndpoint": url_for(endpoint,
-                                               page=page,
-                                               per_page=per_page,
-                                               **kwargs),
+                                                page=page,
+                                                per_page=per_page,
+                                                **kwargs),
                 "nextPageEndpoint": url_for(endpoint,
                                             page=page + 1,
                                             per_page=per_page,

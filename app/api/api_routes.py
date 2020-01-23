@@ -1,50 +1,15 @@
-from flask_restplus import Resource, Api
-from flask import Blueprint, request
-from flask_restplus import fields
+from flask import request, url_for
+from flask_restplus import Resource
 from app import graph
-from .models import Note, Tag
-
-blueprint = Blueprint('api', __name__)
-
-api = Api(blueprint,
-          title="Note App",
-          version='1.0',
-          description="API documentation for my graph notes app")
-
-note_ns = api.namespace('notes',
-                        description="Operations for retrieving "
-                                    "Notes, Child Notes and Parent Notes.")
-
-note_content = api.model('Note Content', {
-        "content": fields.String
-        })
-
-paginated_notes_meta = api.model('Paginated Notes Meta', {
-        "currentPage": fields.Integer,
-        "itemsPerPage": fields.Integer,
-})
-
-paginated_notes_links = api.model('Paginated Notes Links', {
-        "currentPageEndpoint": fields.String,
-        "nextPageEndpoint": fields.String,
-        "prevPageEndpoint": fields.String
-})
-
-note_model = api.model('Note Model', {
-        'id': fields.String,
-        'content': fields.String,
-        'createdAt': fields.DateTime,
-        'archived': fields.Boolean,
-        'tags': fields.List(fields.String),
-})
-
-paginated_notes_model = api.model('Paginated Notes Model', {
-        'data': fields.List(fields.Nested(note_model)),
-        '_meta': fields.Nested(paginated_notes_meta),
-        '_links': fields.Nested(paginated_notes_links)
-})
+from ..models import Note, Tag
+from api_models import (api,
+                        note_ns,
+                        note_model,
+                        note_content,
+                        paginated_notes_model)
 
 
+# Routes
 @note_ns.route('/')
 class Notes(Resource):
     """ Main Note routes.
@@ -61,23 +26,27 @@ class Notes(Resource):
         non-archived notes.
         """
 
-        # Base Query
+        query_key = 'n'
 
-        query = (Note
-                 .match(graph)
-                 .where("_.archived = False")
-                 .order_by("_.createdAt"))
+        # Base Query
+        query = f"""
+                 MATCH ({query_key}: Note)
+                 WHERE {query_key}.archived = False
+                 ORDER BY {query_key}.createdAt
+                 RETURN {query_key}
+                 """
 
         # Parse query string for filters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 5, type=int)
 
-        Note.to_collection_dict(query, page, per_page, 'api.notes_notes')
-
+        # Get paginated Note collection
         data = Note.to_collection_dict(query,
+                                       query_key,
                                        page,
                                        per_page,
                                        'api.notes_notes')
+
         return data
 
     @api.marshal_with(note_model)
@@ -118,15 +87,17 @@ class NotesNote(Resource):
         the database according to the id.
         """
 
-        # Find the note
-        note = (Note
-                .match(graph)
-                .where(f"_.id = {id}")
-                .first())
-        if note:
-            return note.to_dict()
+        query_key = 'n'
 
-        # error no note.
+        query = f"""
+                 MATCH ({query_key}: Note)
+                 WHERE {query_key}.id = {id}
+                 RETURN {query_key}
+                 """
+        note = graph.evaluate(query)
+        if note:
+            return Note.to_dict(note)
+        # else...
 
 @note_ns.route('/<int:id>/parent')
 class NoteParent(Resource):
@@ -143,14 +114,17 @@ class NoteParent(Resource):
         according to the child's id"""
 
         # Find the note
-        note = (graph
-                .run("""
-                     MATCH (child: Note id: $id)-[:CHILD_OF]->(parent: Note)
-                     RETURN parent
-                     """, parameters={"id": id}).data()[0])
+        query_key = 'n'
+
+        query = f"""
+                 MATCH ({query_key}: Note)-[:PARENT_OF]->(child: Note)
+                 WHERE {query_key}.id = {id}
+                 RETURN {query_key}
+                 """
+        note = graph.evaluate(query)
         if note:
-            return note.parent.to_dict()
-        # else error no parent note found
+            return Note.to_dict(note)
+        # else ...
 
 
 @note_ns.route('/<int:id>/child')
@@ -167,12 +141,16 @@ class NoteChild(Resource):
 
         Get a child note from the database
         according to the parent's id"""
-        
-        note = (graph
-                .run("""
-                     MATCH (parent: Note id: $id)-[:PARENT_OF]->(child: Note)
-                     RETURN child
-                     """, parameters={"id": id}).data()[0])
+
+        query_key = 'n'
+
+        query = f"""
+                 MATCH ({query_key}: Note)-[:CHILD_OF]->(parent: Note)
+                 WHERE parent.id = {id}
+                 RETURN {query_key}
+                 """
+        note = (graph.run(query, parameters={"id": id}).data()[0])
+
         if note:
             return note.to_dict()
 
@@ -221,7 +199,7 @@ class NotesTagsTag(Resource):
 
         # Base Query
         query = f"""MATCH (n: Note)<-[:TAGGED]-(t: Tag)
-                    WHERE t.text = {tag} AND n.archived = False
+                    WHERE t.text = \'{tag}\' AND n.archived = False
                     RETURN n
                     ORDER BY n.createdAt
                     """
