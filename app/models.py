@@ -101,7 +101,16 @@ class Note(GraphObject):
             'content': note.get("content"),
             'createdAt': note.get("createdAt"),
             'archived': note.get("archived"),
-            'tags': Note.get_tags(note.get("id"))
+            'tags': Note.get_tags(note.get("id")),
+            '_links': {
+                'parentNoteEndpoint': url_for('api.notes_note_parent',
+                                              id=note.get("id")),
+                'childNoteEndpoint': url_for('api.notes_note_child',
+                                             id=note.get("id")),
+                'currentNoteEndpoint': url_for('api.notes_notes_note',
+                                               id=note.get("id")),
+                # TODO Add an "edit history"
+            }
         }
         return data
 

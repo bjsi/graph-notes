@@ -17,8 +17,9 @@ const textStyle = {
 };
 
 export function Note(note: INote) {
-  const getNotesByTag = async (tag: string) => {
-    let url = "localhost:5000/api/1/tags/" + tag;
+  const archiveNote = async (e: React.MouseEvent) => {
+    e.preventDefault;
+    let url = "/api/1/notes/archive";
     let data = await fetch(url);
     let dataJSON = await data.json();
   };
@@ -26,7 +27,12 @@ export function Note(note: INote) {
   return (
     <Card>
       <CardHeader>
-        <p>{note.createdAt.substr(0, 10)}</p>
+        <span>
+          <p>{note.createdAt.substr(0, 10)}</p>
+        </span>
+        <span>
+          <Badge onClick={archiveNote}>A</Badge>
+        </span>
       </CardHeader>
       <CardBody>
         <CardText>{note.content}</CardText>

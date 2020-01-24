@@ -26,10 +26,17 @@ paginated_notes_meta = api.model('Paginated Notes Meta', {
         "itemsPerPage": fields.Integer,
 })
 
+
 paginated_notes_links = api.model('Paginated Notes Links', {
         "currentPageEndpoint": fields.String,
         "nextPageEndpoint": fields.String,
         "prevPageEndpoint": fields.String
+})
+
+note_links = api.model('Note Links', {
+        "currentNoteEndpoint": fields.String,
+        "parentNoteEndpoint": fields.String,
+        "childNoteEndpoint": fields.String,
 })
 
 note_model = api.model('Note Model', {
@@ -37,7 +44,8 @@ note_model = api.model('Note Model', {
         'content': fields.String,
         'createdAt': fields.DateTime,
         'archived': fields.Boolean,
-        'tags': fields.List(fields.String)
+        'tags': fields.List(fields.String),
+        '_links': fields.Nested(note_links)
 })
 
 paginated_notes_model = api.model('Paginated Notes Model', {
@@ -265,3 +273,24 @@ class NotesTagsTag(Resource):
                                        'api.notes_notes_tags_tag',
                                        tag=tag)
         return data
+
+
+@note_ns.route("/<id>/archive")
+class NoteArchive(Resource):
+    """
+    Archive a note
+    """
+    @api.marshal_with(note_model)
+    @api.response(200, 'Successfully archived note')
+    def post(self, id):
+        """ Archive a note
+        """
+
+        query = f"""
+                 MATCH (n: Note)
+                 WHERE n.id = \'{id}\'
+                 SET n.archived = True
+                 RETURN n
+                 """
+        archived_note = graph.evaluate(query)
+        return note.to_dict(archived_note)

@@ -23,7 +23,21 @@ export class Editor extends React.Component {
     text: ""
   };
 
-  handleSubmit = () => {};
+  handleSubmit = async () => {
+    if (!this.state.text) {
+      return;
+    }
+
+    const url = "/api/1/notes/";
+    const data = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify({ content: this.state.text })
+    });
+  };
 
   cancelEdit = () => {
     console.log("Cancel edit");
