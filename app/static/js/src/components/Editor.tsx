@@ -1,14 +1,16 @@
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
-
+import { Store } from "../Store";
 import {
   Input,
   FormGroup,
   ButtonGroup,
   Badge,
   Button,
-  Container
+  Container,
+  Row
 } from "reactstrap";
+import { MarkdownButtons } from "./MarkdownButtons";
 
 const previewStyle = {
   padding: "10px",
@@ -18,16 +20,13 @@ const previewStyle = {
   backgroundColor: "#FDFDFD"
 };
 
-export class Editor extends React.Component {
-  state = {
-    text: ""
-  };
+export function Editor(): JSX.Element {
+  const { state, dispatch } = React.useContext(Store);
 
-  handleSubmit = async () => {
-    if (!this.state.text) {
+  const handleSubmit = async () => {
+    if (!state.text) {
       return;
     }
-
     const url = "/api/1/notes/";
     const data = await fetch(url, {
       method: "POST",
@@ -35,60 +34,62 @@ export class Editor extends React.Component {
         Accept: "application/json, text/plain, */*",
         "Content-type": "application/json"
       },
-      body: JSON.stringify({ content: this.state.text })
+      body: JSON.stringify({ content: state.text })
+    });
+
+    const dataJSON = await data.json();
+    return dispatch({
+      type: "ADD_NOTE",
+      payload: dataJSON
     });
   };
 
-  cancelEdit = () => {
+  const cancelEdit = () => {
     console.log("Cancel edit");
   };
 
-  preview = (markdown: string) => {};
-
-  handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({
-      [event.target.name]: event.target.value
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    return dispatch({
+      type: "UPDATE_TEXT",
+      payload: event.target.value
     });
   };
 
-  render() {
-    return (
-      <Container>
-        <Container>
-          <span>
-            <Button type="button" className="mb-2" onClick={this.handleSubmit}>
-              Add
-            </Button>
-          </span>
-          <span>
-            <Button
-              type="button"
-              color="warning"
-              className="mb-2"
-              onClick={this.cancelEdit}
-            >
-              Cancel Edit
-            </Button>
-          </span>
-        </Container>
-        <Container>
-          <FormGroup>
-            <Input
-              name="text"
-              type="textarea"
-              value={this.state.text}
-              placeholder="Add some text..."
-              onChange={this.handleChange}
-              rows={4}
-            ></Input>
-          </FormGroup>
-        </Container>
-        <Container>
-          <div style={previewStyle}>
-            <ReactMarkdown source={this.state.text}></ReactMarkdown>
-          </div>
-        </Container>
+  return (
+    <Container>
+      <Container className="mb-2">
+        <Row className="mb-2">
+          <Button type="button" size="small" onClick={handleSubmit}>
+            Add
+          </Button>{" "}
+          <Button
+            type="button"
+            color="warning"
+            className="disabled"
+            onClick={cancelEdit}
+          >
+            Cancel Edit
+          </Button>{" "}
+          <MarkdownButtons />
+        </Row>
       </Container>
-    );
-  }
+      <Container>
+        <FormGroup>
+          <Input
+            name="text"
+            type="textarea"
+            value={state.text}
+            placeholder="Add some text..."
+            onChange={handleChange}
+            rows={4}
+          ></Input>
+        </FormGroup>
+      </Container>
+      <Container>
+        <div style={previewStyle}>
+          <ReactMarkdown source={state.text}></ReactMarkdown>
+        </div>
+      </Container>
+    </Container>
+  );
 }

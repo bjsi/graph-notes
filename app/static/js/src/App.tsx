@@ -25,7 +25,7 @@ export default function App(): JSX.Element {
     const data = await fetch("/api/1/notes/");
     const dataJSON = await data.json();
     return dispatch({
-      type: "FETCH_DATA",
+      type: "GET_NOTES",
       payload: dataJSON
     });
   };

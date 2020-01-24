@@ -117,7 +117,15 @@ class Notes(Resource):
                 "archived": note.archived,
                 "createdAt": note.createdAt,
                 "content": note.content,
-                "tags": Note.get_tags(note.id)
+                "tags": Note.get_tags(note.id),
+                "_links": {
+                    "currentNoteEndpoint": url_for("api.notes_notes_note",
+                                                   id=note.id),
+                    "parentNoteEndpoint": url_for("api.notes_note_parent",
+                                                  id=note.id),
+                    "childNoteEndpoint": url_for("api.notes_note_child",
+                                                 id=note.id)
+                }
             }
         else:
             # TODO return error message
@@ -220,7 +228,7 @@ class NoteChild(Resource):
         to id and archive the parent note """
 
         # Build the query
-        parent = Note.match(graph).where(f"_.id = {id}")[0]
+        parent = list(Note.match(graph).where(f"_.id = \'{id}\'"))[0]
 
         if parent:
             data = request.get_json()
@@ -232,7 +240,15 @@ class NoteChild(Resource):
                 "archived": child.archived,
                 "createdAt": child.createdAt,
                 "content": child.content,
-                "tags": Note.get_tags(child.id)
+                "tags": Note.get_tags(child.id),
+                "_links": {
+                    "currentNoteEndpoint": url_for("api.notes_notes_note",
+                                                   id=child.id),
+                    "parentNoteEndpoint": url_for("api.notes_note_parent",
+                                                  id=child.id),
+                    "childNoteEndpoint": url_for("api.notes_note_child",
+                                                 id=child.id)
+                }
             }
         # TODO error handling
 
@@ -293,4 +309,4 @@ class NoteArchive(Resource):
                  RETURN n
                  """
         archived_note = graph.evaluate(query)
-        return note.to_dict(archived_note)
+        return Note.to_dict(archived_note)

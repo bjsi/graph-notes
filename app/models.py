@@ -35,6 +35,7 @@ class Note(GraphObject):
         """
         Push the Note instance to the graph
         """
+        self.content, self.tags = self.parse_tags()
         graph.push(self)
 
     def add_child(self, child):
@@ -77,6 +78,20 @@ class Note(GraphObject):
                  .match(graph)
                  .where("_.archived = false"))
         return notes
+
+    @staticmethod
+    def parse_tags(content: str):
+        """
+        Parse tags out of the content
+        """
+        content = []
+        tags = []
+        for line in content.splitlines():
+            if line.startswith('@'):
+                tags.append(line[1:].strip())
+            else:
+                content.append(line)
+        return '\n'.join(content), tags
 
     @staticmethod
     def get_tags(id):
