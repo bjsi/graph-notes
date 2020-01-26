@@ -1,17 +1,13 @@
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
-import { Store } from "../Store";
-import {
-  Input,
-  FormGroup,
-  ButtonGroup,
-  Badge,
-  Button,
-  Container,
-  Row
-} from "reactstrap";
+import { Store } from "../../Store";
+import { Button } from "reactstrap";
 
-export function MarkdownButtons(): JSX.Element {
+interface IMarkdownButtonsProps {
+  focusEditor(): void;
+}
+
+export function MarkdownButtons(props: IMarkdownButtonsProps): JSX.Element {
   const { state, dispatch } = React.useContext(Store);
 
   const boldText = () => {
@@ -45,6 +41,7 @@ export function MarkdownButtons(): JSX.Element {
       result.push(lineHandler(line));
     });
 
+    props.focusEditor();
     return dispatch({
       type: "UPDATE_TEXT",
       payload: state.text

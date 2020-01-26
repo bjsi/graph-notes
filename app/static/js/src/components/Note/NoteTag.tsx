@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Badge, ButtonGroup } from "reactstrap";
-import { Store } from "../Store";
+import { Store } from "../../Store";
 
 export interface ITag {
   tag: string;

@@ -5,11 +5,24 @@ import {
   IPageLinks
 } from "./interfaces/Note.interfaces";
 
+interface IEditing {
+  currentlyEditing: boolean;
+  note: INote | null;
+}
+
+interface IAlert {
+  visible: boolean;
+  text: string;
+  color: string;
+}
+
 interface IState {
   notes: INote[];
   paginationInfo: IPaginationInfo;
   paginationLinks: IPageLinks;
   text: string;
+  editing: IEditing;
+  alert: IAlert;
 }
 
 const initialState: IState = {
@@ -23,7 +36,16 @@ const initialState: IState = {
     nextPageEndpoint: "",
     prevPageEndpoint: ""
   },
-  text: ""
+  text: "",
+  editing: {
+    currentlyEditing: false,
+    note: null
+  },
+  alert: {
+    visible: false,
+    text: "",
+    color: ""
+  }
 };
 
 interface IAction {
@@ -46,6 +68,7 @@ function reducer(state: IState, action: IAction) {
       var newState = { ...state };
       newState.notes.forEach((note: INote, index: number) => {
         if (note.id === action.payload.id) {
+          // TODO change to filter
           newState.notes.splice(index, 1);
         }
       });
@@ -56,6 +79,7 @@ function reducer(state: IState, action: IAction) {
       var newState = { ...state };
       newState.notes.forEach((note: INote, index: number) => {
         if ((note.id = action.payload.targetId)) {
+          // TODO change to filter
           newState.notes.splice(index, 1, note);
         }
       });
@@ -71,6 +95,16 @@ function reducer(state: IState, action: IAction) {
       return {
         ...state,
         text: action.payload
+      };
+    case "EDITING":
+      return {
+        ...state,
+        editing: action.payload
+      };
+    case "UPDATE_ALERT":
+      return {
+        ...state,
+        alert: action.payload
       };
     default:
       return state;

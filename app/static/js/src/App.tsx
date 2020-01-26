@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { NoteList } from "./components/NoteList";
+import { NoteList } from "./components/Note/NoteList";
 import CardColumns from "reactstrap/lib/CardColumns";
-import { Editor } from "./components/Editor";
+import { Editor } from "./components/Editor/Editor";
 import { Store } from "./Store";
 import { Pagination } from "./components/Pagination";
 import { INote } from "./interfaces/Note.interfaces";
@@ -14,7 +14,7 @@ import {
   Button,
   Container
 } from "reactstrap";
-import { Note } from "./components/Note";
+import { Note } from "./components/Note/Note";
 
 export default function App(): JSX.Element {
   const { state, dispatch } = React.useContext(Store);
