@@ -75,12 +75,23 @@ class Notes(Resource):
         query_key = 'n'
 
         # Base Query
-        query = f"""
-                 MATCH ({query_key}: Note)
-                 WHERE {query_key}.archived = False
-                 RETURN {query_key}
-                 ORDER BY {query_key}.createdAt
-                 """
+        query_base = f"""
+                      MATCH ({query_key}: Note)
+                      WHERE {query_key}.archived = False
+                      """
+
+        # Find search terms
+        search = request.args.get("search")
+        if search:
+            query_base += " " + f"AND {query_key}.content CONTAINS \'{search}\'"
+
+        query_tail = f"""
+                      RETURN {query_key}
+                      ORDER BY {query_key}.createdAt
+                      """
+        
+        # Complete the query
+        query = query_base + " " + query_tail
 
         # Parse query string for filters
         page = request.args.get('page', 1, type=int)
@@ -91,7 +102,8 @@ class Notes(Resource):
                                        query_key,
                                        page,
                                        per_page,
-                                       'api.notes_notes')
+                                       'api.notes_notes',
+                                       search=search)
 
         return data
 
@@ -121,10 +133,10 @@ class Notes(Resource):
                 "_links": {
                     "currentNoteEndpoint": url_for("api.notes_notes_note",
                                                    id=note.id),
-                    "parentNoteEndpoint": url_for("api.notes_note_parent",
-                                                  id=note.id),
-                    "childNoteEndpoint": url_for("api.notes_note_child",
-                                                 id=note.id)
+                    "parentNoteEndpoint": url_for("api.notes_notes_note",
+                                                  id=note.id) if Note.has_parent(note.id) else "",
+                    "childNoteEndpoint": url_for("api.notes_notes_note",
+                                                 id=note.id) if Note.has_child(note.id) else ""
                 }
             }
         else:
@@ -244,10 +256,10 @@ class NoteChild(Resource):
                 "_links": {
                     "currentNoteEndpoint": url_for("api.notes_notes_note",
                                                    id=child.id),
-                    "parentNoteEndpoint": url_for("api.notes_note_parent",
-                                                  id=child.id),
-                    "childNoteEndpoint": url_for("api.notes_note_child",
-                                                 id=child.id)
+                    "parentNoteEndpoint": url_for("api.notes_notes_note",
+                                                  id=child.id) if Note.has_parent(child.id) else "",
+                    "childNoteEndpoint": url_for("api.notes_notes_note",
+                                                 id=child.id) if Note.has_child(child.id) else ""
                 }
             }
         # TODO error handling

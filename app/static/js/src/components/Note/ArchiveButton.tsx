@@ -27,9 +27,9 @@ export class ArchiveButton extends React.Component<{ note: INote }> {
     return (
       <Button
         onClick={this.archiveNote}
-        className={
-          this.context.state.editing.currentlyEditing ? "disabled" : ""
-        }
+        disabled={this.context.state.editing.currentlyEditing ? true : false}
+        className="float-right ml-auto"
+        size="sm"
       >
         A
       </Button>

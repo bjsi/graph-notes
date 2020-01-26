@@ -1,14 +1,6 @@
 import * as React from "react";
 import { Store } from "../../Store";
-import {
-  Input,
-  FormGroup,
-  ButtonGroup,
-  Badge,
-  Button,
-  Container,
-  Row
-} from "reactstrap";
+import { Button } from "reactstrap";
 import { INote } from "../../interfaces/Note.interfaces";
 
 interface IEditButtonProps {
@@ -24,7 +16,7 @@ export class EditButton extends React.Component<IEditButtonProps> {
     });
     this.context.dispatch({
       type: "EDITING",
-      payload: { note: this.props.note, editing: true }
+      payload: { note: this.props.note, currentlyEditing: true }
     });
   };
 
@@ -32,7 +24,9 @@ export class EditButton extends React.Component<IEditButtonProps> {
     return (
       <Button
         onClick={this.editNote}
-        className={this.context.state.editing.editing ? "disabled" : ""}
+        disabled={this.context.state.editing.currentlyEditing ? true : false}
+        className="float-right"
+        size="sm"
       >
         E
       </Button>

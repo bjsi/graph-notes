@@ -2,7 +2,8 @@ import * as React from "react";
 import {
   INote,
   IPaginationInfo,
-  IPageLinks
+  IPageLinks,
+  IPaginatedNotes
 } from "./interfaces/Note.interfaces";
 
 interface IEditing {
@@ -23,6 +24,7 @@ interface IState {
   text: string;
   editing: IEditing;
   alert: IAlert;
+  search: string;
 }
 
 const initialState: IState = {
@@ -45,12 +47,32 @@ const initialState: IState = {
     visible: false,
     text: "",
     color: ""
-  }
+  },
+  search: ""
 };
 
 interface IAction {
   type: string;
   payload: any;
+}
+
+interface IGetNotes {
+  payload: IPaginatedNotes;
+}
+
+interface IUpdateText {
+  payload: string;
+}
+
+interface IRemoveNote {
+  payload: INote;
+}
+
+interface IReplaceNote {
+  payload: {
+    targetId: string;
+    note: INote;
+  };
 }
 
 export const Store = React.createContext<IState | any>(initialState);
@@ -65,22 +87,15 @@ function reducer(state: IState, action: IAction) {
         paginationLinks: action.payload._links
       };
     case "REMOVE_NOTE":
-      var newState = { ...state };
-      newState.notes.forEach((note: INote, index: number) => {
-        if (note.id === action.payload.id) {
-          // TODO change to filter
-          newState.notes.splice(index, 1);
-        }
-      });
       return {
-        ...newState
+        ...state,
+        notes: state.notes.filter(note => note.id != action.payload.id)
       };
     case "REPLACE_NOTE":
       var newState = { ...state };
       newState.notes.forEach((note: INote, index: number) => {
-        if ((note.id = action.payload.targetId)) {
-          // TODO change to filter
-          newState.notes.splice(index, 1, note);
+        if ((note.id = action.payload.replaceId)) {
+          newState.notes.splice(index, 1, action.payload.note);
         }
       });
       return {
@@ -105,6 +120,11 @@ function reducer(state: IState, action: IAction) {
       return {
         ...state,
         alert: action.payload
+      };
+    case "UPDATE_SEARCH":
+      return {
+        ...state,
+        search: action.payload
       };
     default:
       return state;

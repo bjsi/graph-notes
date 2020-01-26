@@ -38,7 +38,7 @@ export function Pagination(): JSX.Element {
   };
 
   return (
-    <Container className="justify-content-md-center">
+    <Container className="justify-content-center">
       <span>
         <Button
           onClick={loadPrevPage}

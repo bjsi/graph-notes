@@ -87,6 +87,30 @@ class Note(GraphObject):
                 content.append(line)
         return '\n'.join(content), tags
 
+    @staticmethod
+    def has_parent(id: str):
+        """
+        Check if the note has a parent
+        """
+        query = f"""
+                 MATCH (n: Note)-[:CHILD_OF]->(p: Note)
+                 WHERE n.id = \'{id}\'
+                 RETURN p.id
+                 """
+        return graph.evaluate(query)
+
+    @staticmethod
+    def has_child(id: str):
+        """
+        Check if the note has a child
+        """
+        query = f"""
+                 MATCH (n: Note)-[:PARENT_OF]->(c: Note)
+                 WHERE n.id = \'{id}\'
+                 RETURN c.id
+                 """
+        return graph.evaluate(query)
+
     @classmethod
     def public(cls):
         """
@@ -122,10 +146,10 @@ class Note(GraphObject):
             'archived': note.get("archived"),
             'tags': Note.get_tags(note.get("id")),
             '_links': {
-                'parentNoteEndpoint': url_for('api.notes_note_parent',
-                                              id=note.get("id")),
-                'childNoteEndpoint': url_for('api.notes_note_child',
-                                             id=note.get("id")),
+                'parentNoteEndpoint': url_for('api.notes_notes_note',
+                                              id=note.get("id")) if Note.has_parent(note.get("id")) else "",
+                'childNoteEndpoint': url_for('api.notes_notes_note',
+                                             id=note.get("id")) if Note.has_child(note.get("id")) else "",
                 'currentNoteEndpoint': url_for('api.notes_notes_note',
                                                id=note.get("id"))
             }

@@ -49,12 +49,15 @@ export function AddNoteButton(props: IAddNoteProps) {
     });
     dispatch({ type: "ADD_NOTE", payload: dataJSON });
     dispatch({ type: "EDITING", payload: { noteId: "", editing: false } });
+    dispatch({ type: "UPDATE_TEXT", payload: "" });
     props.focusEditor();
   };
 
   return (
-    <Button type="button" size="small" onClick={addNote}>
-      Add
-    </Button>
+    <>
+      <Button color="primary" size="md" onClick={addNote}>
+        <i className="fa fa-plus"></i> Add
+      </Button>{" "}
+    </>
   );
 }

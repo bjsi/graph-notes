@@ -6,6 +6,7 @@ import { MarkdownButtons } from "./MarkdownButtons";
 import { AddNoteButton } from "./AddNoteButton";
 import { CancelEditButton } from "./CancelEditButton";
 import { AlertMessage } from "../AlertMessage";
+import { Search } from "../Search/Search";
 
 const previewStyle = {
   padding: "10px",
@@ -35,14 +36,16 @@ export class Editor extends React.Component {
 
   render() {
     return (
-      <Container>
-        <Container className="mb-2">
-          <Row className="mb-2">
+      <div className="container">
+        <div className="container mb-2">
+          <div className="mb-2">
             <AddNoteButton focusEditor={this.focusEditor} />
-            <CancelEditButton focusEditor={this.focusEditor} />
+            {this.context.state.editing.currentlyEditing ? (
+              <CancelEditButton focusEditor={this.focusEditor} />
+            ) : null}
             <MarkdownButtons focusEditor={this.focusEditor} />
-          </Row>
-        </Container>
+          </div>
+        </div>
         <Container>
           <Input
             innerRef={this.editorInput}
@@ -55,11 +58,17 @@ export class Editor extends React.Component {
           ></Input>
         </Container>
         <Container>
+          <AlertMessage />
+        </Container>
+        <Container>
           <div style={previewStyle}>
             <ReactMarkdown source={this.context.state.text}></ReactMarkdown>
           </div>
         </Container>
-      </Container>
+        <Container className="ml-auto">
+          <Search />
+        </Container>
+      </div>
     );
   }
 }

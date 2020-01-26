@@ -30,8 +30,7 @@ export function Note(note: INote) {
     let dataJSON = await data.json();
     return;
   };
-  const getChildNote = async (e: React.MouseEvent) => {
-    e.preventDefault;
+  const getChildNote = async () => {
     let data = await fetch(note._links.childNoteEndpoint);
     let dataJSON = await data.json();
     return dispatch({
@@ -51,22 +50,30 @@ export function Note(note: INote) {
   };
 
   return (
-    <Card color={state.editing.currentlyEditing ? "warning" : ""}>
-      <CardHeader>
-        <Row>
-          <p>{note.createdAt.substr(0, 10)}</p>
-          <ArchiveButton note={note} />
-          <EditButton note={note}></EditButton>
-        </Row>
+    <Card
+      color={
+        state.editing.currentlyEditing && state.editing.note.id === note.id
+          ? "warning"
+          : ""
+      }
+    >
+      <CardHeader style={{ fontSize: 18 }}>
+        {note.createdAt.substr(0, 10)}
+        <ArchiveButton note={note} />
+        <EditButton note={note} />
       </CardHeader>
       <CardBody>
-        <ReactMarkdown>{note.content}</ReactMarkdown>
+        <ReactMarkdown renderers={{}} source={note.content}></ReactMarkdown>
       </CardBody>
       <CardFooter>
         <Button
           onClick={getParentNote}
-          size="small"
-          className={note._links.parentNoteEndpoint ? "" : "disabled"}
+          size="sm"
+          className={
+            "float-left" +
+            " " +
+            (note._links.parentNoteEndpoint ? "" : "disabled")
+          }
         >
           Parent
         </Button>{" "}
@@ -79,8 +86,12 @@ export function Note(note: INote) {
         })}
         <Button
           onClick={getChildNote}
-          size="small"
-          className={note._links.childNoteEndpoint ? "" : "disabled"}
+          size="sm"
+          className={
+            "float-right" +
+            " " +
+            (note._links.childNoteEndpoint ? "" : "disabled")
+          }
         >
           Child
         </Button>

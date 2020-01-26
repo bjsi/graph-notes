@@ -60,17 +60,20 @@ export function MarkdownButtons(props: IMarkdownButtonsProps): JSX.Element {
   };
   return (
     <>
-      <Button type="button" size="small" onClick={boldText}>
-        B
+      <Button outline color="dark" size="sm" onClick={boldText}>
+        <i className="fa fa-bold"></i>
       </Button>{" "}
-      <Button type="button" size="small" onClick={italicText}>
-        I
+      <Button outline color="dark" size="sm" onClick={italicText}>
+        <i className="fa fa-italic"></i>
       </Button>{" "}
-      <Button type="button" size="small" onClick={listText}>
-        L
+      <Button outline color="dark" size="sm" onClick={indentText}>
+        <i className="fa fa-indent"></i>
       </Button>{" "}
-      <Button type="button" size="small" onClick={listText}>
-        L
+      <Button outline color="dark" size="sm" onClick={undentText}>
+        <i className="fa fa-outdent"></i>
+      </Button>{" "}
+      <Button outline color="dark" size="sm" onClick={listText}>
+        <i className="fa fa-list-ul"></i>
       </Button>{" "}
     </>
   );
