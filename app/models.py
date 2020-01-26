@@ -35,7 +35,10 @@ class Note(GraphObject):
         """
         Push the Note instance to the graph
         """
-        self.content, self.tags = self.parse_tags()
+        self.content, tags = self.parse_tags()
+        tags = self.create_tags(tags)
+        for tag in tags:
+            self.tags.add(tag)
         graph.push(self)
 
     def add_child(self, child):
@@ -56,18 +59,33 @@ class Note(GraphObject):
         self.archived = True
         self.save()
 
-    def add_tag(self, tag):
+    def create_tags(self, tags):
         """
-        Add a tag to the Note
+        Create tags
         """
-        self.tags.add(tag)
-        self.save()
+        return [
+                Tag(text=tag)
+                for tag in tags
+               ]
 
     def pull_latest_info(self):
         """
         Updates the Note object with latest info
         """
         graph.pull(self)
+    
+    def parse_tags(self):
+        """
+        Parse tags out of the content
+        """
+        content = []
+        tags = []
+        for line in self.content.splitlines():
+            if line.startswith('@'):
+                tags.append(line[1:].strip())
+            else:
+                content.append(line)
+        return '\n'.join(content), tags
 
     @classmethod
     def public(cls):
@@ -78,20 +96,6 @@ class Note(GraphObject):
                  .match(graph)
                  .where("_.archived = false"))
         return notes
-
-    @staticmethod
-    def parse_tags(content: str):
-        """
-        Parse tags out of the content
-        """
-        content = []
-        tags = []
-        for line in content.splitlines():
-            if line.startswith('@'):
-                tags.append(line[1:].strip())
-            else:
-                content.append(line)
-        return '\n'.join(content), tags
 
     @staticmethod
     def get_tags(id):
@@ -123,8 +127,7 @@ class Note(GraphObject):
                 'childNoteEndpoint': url_for('api.notes_note_child',
                                              id=note.get("id")),
                 'currentNoteEndpoint': url_for('api.notes_notes_note',
-                                               id=note.get("id")),
-                # TODO Add an "edit history"
+                                               id=note.get("id"))
             }
         }
         return data
