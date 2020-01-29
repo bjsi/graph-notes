@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Container, Button } from "reactstrap";
+import { Container, Button, Row, Col } from "reactstrap";
 import { Store } from "../Store";
 import { IPaginationInfo, IPageLinks } from "../interfaces/Note.interfaces";
 
@@ -38,23 +38,31 @@ export function Pagination(): JSX.Element {
   };
 
   return (
-    <Container className="justify-content-center">
-      <span>
-        <Button
-          onClick={loadPrevPage}
-          className={state.paginationLinks.prevPageEndpoint ? "" : "disabled"}
-        >
-          prev
-        </Button>{" "}
-      </span>
-      <span>
-        <Button
-          onClick={loadNextPage}
-          className={state.paginationLinks.nextPageEndpoint ? "" : "disabled"}
-        >
-          next
-        </Button>
-      </span>
-    </Container>
+    <>
+      <div className="text-center">
+        <p>
+          Current page: {state.paginationInfo.currentPage} | Items per page:{" "}
+          {state.paginationInfo.itemsPerPage}
+        </p>
+      </div>
+      <div className="text-center">
+        <span>
+          <Button
+            onClick={loadPrevPage}
+            className={state.paginationLinks.prevPageEndpoint ? "" : "disabled"}
+          >
+            <i className="fa fa-arrow-left"></i> prev
+          </Button>{" "}
+        </span>
+        <span>
+          <Button
+            onClick={loadNextPage}
+            className={state.paginationLinks.nextPageEndpoint ? "" : "disabled"}
+          >
+            next <i className="fa fa-arrow-right"></i>
+          </Button>
+        </span>
+      </div>
+    </>
   );
 }

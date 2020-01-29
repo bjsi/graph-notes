@@ -16,6 +16,7 @@ import { Store } from "../../Store";
 import { EditButton } from "./EditButton";
 import { ArchiveButton } from "./ArchiveButton";
 import * as ReactMarkdown from "react-markdown";
+import { NoteTags } from "./NoteTags";
 
 const textStyle = {
   fontSize: "16px"
@@ -64,37 +65,42 @@ export function Note(note: INote) {
       </CardHeader>
       <CardBody>
         <ReactMarkdown renderers={{}} source={note.content}></ReactMarkdown>
+        <hr />
+        <small>Source: </small>
+        <span>
+          <p>
+            <i className="fa fa-tags"></i>:{" "}
+          </p>
+        </span>
+        <span>
+          <NoteTags note={note}></NoteTags>
+        </span>
       </CardBody>
       <CardFooter>
-        <Button
-          onClick={getParentNote}
-          size="sm"
-          className={
-            "float-left" +
-            " " +
-            (note._links.parentNoteEndpoint ? "" : "disabled")
-          }
-        >
-          Parent
-        </Button>{" "}
-        {note.tags.map((tag: string) => {
-          return (
-            <section>
-              <NoteTag tag={tag}></NoteTag>{" "}
-            </section>
-          );
-        })}
-        <Button
-          onClick={getChildNote}
-          size="sm"
-          className={
-            "float-right" +
-            " " +
-            (note._links.childNoteEndpoint ? "" : "disabled")
-          }
-        >
-          Child
-        </Button>
+        <Row>
+          <Button
+            onClick={getParentNote}
+            size="sm"
+            className={
+              "float-left" +
+              " " +
+              (note._links.parentNoteEndpoint ? "" : "disabled")
+            }
+          >
+            Parent
+          </Button>{" "}
+          <Button
+            onClick={getChildNote}
+            size="sm"
+            className={
+              "float-right" +
+              " " +
+              (note._links.childNoteEndpoint ? "" : "disabled")
+            }
+          >
+            Child
+          </Button>
+        </Row>
       </CardFooter>
     </Card>
   );

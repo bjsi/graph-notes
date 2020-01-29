@@ -25,6 +25,8 @@ interface IState {
   editing: IEditing;
   alert: IAlert;
   search: string;
+  beforeDate: string;
+  afterDate: string;
 }
 
 const initialState: IState = {
@@ -48,7 +50,9 @@ const initialState: IState = {
     text: "",
     color: ""
   },
-  search: ""
+  search: "",
+  beforeDate: "",
+  afterDate: ""
 };
 
 interface IAction {
@@ -125,6 +129,16 @@ function reducer(state: IState, action: IAction) {
       return {
         ...state,
         search: action.payload
+      };
+    case "UPDATE_BEFORE_DATE":
+      return {
+        ...state,
+        beforeDate: action.payload
+      };
+    case "UPDATE_AFTER_DATE":
+      return {
+        ...state,
+        afterDate: action.payload
       };
     default:
       return state;

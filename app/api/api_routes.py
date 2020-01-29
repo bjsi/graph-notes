@@ -1,6 +1,5 @@
 from flask import request, url_for, Blueprint
 from flask_restplus import Resource, Api
-from app import graph
 from ..models import Note, Tag
 from flask_restplus import fields
 
@@ -40,7 +39,8 @@ note_links = api.model('Note Links', {
 })
 
 note_model = api.model('Note Model', {
-        'id': fields.String,
+        'id': fields.Integer,
+        'uid': fields.String,
         'content': fields.String,
         'createdAt': fields.DateTime,
         'archived': fields.Boolean,
@@ -64,47 +64,75 @@ class Notes(Resource):
     @api.response(200, 'Successfully read notes')
     @api.param('page', 'Number of the page to get')
     @api.param('per_page', 'Number of notes per page')
+    @api.param('tag', "Get notes matching this tag")
+    @api.param('start_date', "Date to match after eg. 1970-10-10")
+    @api.param('end_date', "Date to match before eg. 1970-10-15")
+    @api.param('search', "Get notes with content containing this string")
     def get(self):
 
         """ Get outstanding notes
 
-        Returns a paginated collection of
-        non-archived notes.
+        Begins with the base clause and adds additional query clauses.
         """
 
-        query_key = 'n'
+        # Query parameters
+        params = {}
 
         # Base Query
-        query_base = f"""
-                      MATCH ({query_key}: Note)
-                      WHERE {query_key}.archived = False
-                      """
+        query = """
+                MATCH (n: Note)
+                """
 
-        # Find search terms
-        search = request.args.get("search")
-        if search:
-            query_base += " " + f"AND {query_key}.content CONTAINS \'{search}\'"
+        # Parse query parameters
+        params['tag'] = request.args.get('tag')
+        params['search'] = request.args.get("search")
+        params['start_date'] = request.args.get("start_date")
+        params['end_date'] = request.args.get('end_date')
+        params['page'] = request.args.get('page', 1, type=int)
+        params['per_page'] = request.args.get('per_page', 5, type=int)
 
-        query_tail = f"""
-                      RETURN {query_key}
-                      ORDER BY {query_key}.createdAt
-                      """
-        
-        # Complete the query
-        query = query_base + " " + query_tail
+        # Pagination variables
+        params['skip'] = (params['page'] * params['per_page']) - params['per_page']
+        params['limit'] = (params['per_page']) + 1
 
-        # Parse query string for filters
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 5, type=int)
+        if params['tag']:
+            tag_clause = "-[:TAGGED]->(t: Tag)"
+            query = "".join((query, tag_clause))
+
+        # Add query clauses.
+        archived_clause = "WHERE n.archived = False"
+        query = " ".join((query, archived_clause))
+
+        if params['tag']:
+            tag_clause = "AND t.text = $tag"
+            query = " ".join((query, tag_clause))
+        if params['search']:
+            search_clause = "AND toLower(n.content) CONTAINS toLower($search) "
+            query = " ".join((query, search_clause))
+        if params['start_date']:
+            start_date_clause = "AND n.createdAt > $start_date"
+            query = " ".join((query, start_date_clause))
+        if params['end_date']:
+            end_date_clause = "AND n.createdAt < $end_date"
+            query = " ".join((query, end_date_clause))
+
+        # Return clause with pagination
+        return_clause = """
+                        RETURN n
+                        ORDER BY n.createdAt
+                        """
+        pagination_clause = "SKIP $skip LIMIT $limit"
+        query = " ".join((query, return_clause, pagination_clause))
 
         # Get paginated Note collection
         data = Note.to_collection_dict(query,
-                                       query_key,
-                                       page,
-                                       per_page,
+                                       params,
                                        'api.notes_notes',
-                                       search=search)
-
+                                       search=params['search'],
+                                       start_date=params['start_date'],
+                                       end_date=params['end_date'],
+                                       per_page=params['per_page'],
+                                       tag=params['tag'])
         return data
 
     @api.marshal_with(note_model)
@@ -116,35 +144,18 @@ class Notes(Resource):
         Returns the newly created parent note.
         """
 
-        # Parse request body for content
+        # Parse content
         data = request.get_json()
         content = data["content"]
 
         if content:
             note = Note(content=content)
-            note.save()
-            # TODO fix the whole ogm mess.
-            return {
-                "id": note.id,
-                "archived": note.archived,
-                "createdAt": note.createdAt,
-                "content": note.content,
-                "tags": Note.get_tags(note.id),
-                "_links": {
-                    "currentNoteEndpoint": url_for("api.notes_notes_note",
-                                                   id=note.id),
-                    "parentNoteEndpoint": url_for("api.notes_notes_note",
-                                                  id=note.id) if Note.has_parent(note.id) else "",
-                    "childNoteEndpoint": url_for("api.notes_notes_note",
-                                                 id=note.id) if Note.has_child(note.id) else ""
-                }
-            }
-        else:
-            # TODO return error message
-            pass
+            note.save_note()
+            return note.to_dict()
+        # TODO return error message
 
 
-@note_ns.route('/<id>')
+@note_ns.route('/<uid>')
 class NotesNote(Resource):
 
     """ Individual Notes
@@ -152,7 +163,7 @@ class NotesNote(Resource):
 
     @api.marshal_with(note_model)
     @api.response(200, 'Successfully read note')
-    def get(self, id):
+    def get(self, uid):
 
         """ Get a single note
 
@@ -160,19 +171,13 @@ class NotesNote(Resource):
         the database according to the id.
         """
 
-        query_key = 'n'
-
-        query = f"""
-                 MATCH ({query_key}: Note)
-                 WHERE {query_key}.id = \'{id}\'
-                 RETURN {query_key}
-                 """
-        note = graph.evaluate(query)
+        note = Note.nodes.get_or_none(uid=uid)
         if note:
-            return Note.to_dict(note)
+            return note.to_dict()
         # else...
 
-@note_ns.route('/<id>/parent')
+
+@note_ns.route('/<uid>/parent')
 class NoteParent(Resource):
 
     """ For finding parent Notes.
@@ -180,27 +185,23 @@ class NoteParent(Resource):
 
     @api.marshal_with(note_model)
     @api.response(200, 'Successfully read note')
-    def get(self, id):
+    def get(self, uid):
 
         """ Get parent of note by id
+
         Get a parent note from the database
         according to the child's id"""
 
-        # Find the note
-        query_key = 'n'
-
-        query = f"""
-                 MATCH ({query_key}: Note)-[:PARENT_OF]->(child: Note)
-                 WHERE {query_key}.id = \'{id}\'
-                 RETURN {query_key}
-                 """
-        note = graph.evaluate(query)
-        if note:
-            return Note.to_dict(note)
+        child = Note.nodes.get_or_none(uid=uid)
+        if child:
+            parent = child.parent.get_or_none()
+            if parent:
+                return parent.to_dict()
+            # else....
         # else ...
 
 
-@note_ns.route('/<id>/child')
+@note_ns.route('/<uid>/child')
 class NoteChild(Resource):
 
     """ Finding Child Notes.
@@ -208,117 +209,62 @@ class NoteChild(Resource):
 
     @api.marshal_with(note_model)
     @api.response(200, 'Successfully read note')
-    def get(self, id):
+    def get(self, uid):
 
         """ Get child of note by id
 
         Get a child note from the database
         according to the parent's id"""
-
-        query_key = 'n'
-
-        query = f"""
-                 MATCH ({query_key}: Note)-[:CHILD_OF]->(parent: Note)
-                 WHERE parent.id = \'{id}\'
-                 RETURN {query_key}
-                 """
-        note = graph.evaluate(query)
-
-        if note:
-            return Note.to_dict(note)
-
-        # TODO else
+        
+        parent = Note.nodes.get_or_none(uid=uid)
+        if parent:
+            child = parent.child.get_or_none()
+            if child:
+                return child.to_dict()
+            # else....
+        # else ...
 
     @api.marshal_with(note_model)
     @api.response(201, 'Successfully created child note')
     @api.expect(note_content)
-    def post(self, id):
+    def post(self, uid):
 
         """ Create a child of note by id
 
-        Create a child note of the note according
+        Create and return a child note of the note according
         to id and archive the parent note """
 
-        # Build the query
-        parent = list(Note.match(graph).where(f"_.id = \'{id}\'"))[0]
-
+        parent = Note.nodes.get_or_none(uid=uid)
         if parent:
+            # Parse content
             data = request.get_json()
             content = data.get("content")
+            # Create child
             child = Note(content=content)
-            parent.add_child(child)
-            return {
-                "id": child.id,
-                "archived": child.archived,
-                "createdAt": child.createdAt,
-                "content": child.content,
-                "tags": Note.get_tags(child.id),
-                "_links": {
-                    "currentNoteEndpoint": url_for("api.notes_notes_note",
-                                                   id=child.id),
-                    "parentNoteEndpoint": url_for("api.notes_notes_note",
-                                                  id=child.id) if Note.has_parent(child.id) else "",
-                    "childNoteEndpoint": url_for("api.notes_notes_note",
-                                                 id=child.id) if Note.has_child(child.id) else ""
-                }
-            }
-        # TODO error handling
+            child.save()
+            # Connect parent and child
+            parent.child.connect(child)
+            child.parent.connect(parent)  # TODO test this
+            parent.archived = True
+            parent.save()
+            child.save()
+            return child.to_dict()
+        # else...
 
 
-@note_ns.route('/tags/<tag>')
-class NotesTagsTag(Resource):
-
-    """ Query by tag.
-    """
-
-    @api.marshal_with(paginated_notes_model)
-    @api.response(200, 'Successfully read notes')
-    def get(self, tag):
-
-        """ Get notes by tag
-
-        Allows the use to get notes according to
-        the tag."""
-
-        query_key = 'n'
-
-        # Base Query
-        query = f"""MATCH ({query_key}: Note)<-[:TAGGED]-(t: Tag)
-                    WHERE t.text = \'{tag}\' AND {query_key}.archived = False
-                    RETURN {query_key}
-                    ORDER BY {query_key}.createdAt
-                    """
-
-        # Pagination
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 5, type=int)
-
-        # Return the collection
-        data = Note.to_collection_dict(query,
-                                       query_key,
-                                       page,
-                                       per_page,
-                                       'api.notes_notes_tags_tag',
-                                       tag=tag)
-        return data
-
-
-@note_ns.route("/<id>/archive")
+@note_ns.route("/<uid>/archive")
 class NoteArchive(Resource):
     """
     Archive a note
     """
     @api.marshal_with(note_model)
     @api.response(200, 'Successfully archived note')
-    def post(self, id):
+    def post(self, uid):
         """ Archive a note
         """
-
-        query = f"""
-                 MATCH (n: Note)
-                 WHERE n.id = \'{id}\'
-                 SET n.archived = True
-                 RETURN n
-                 """
-        archived_note = graph.evaluate(query)
-        return Note.to_dict(archived_note)
+        note = Note.nodes.get_or_none(uid=uid)
+        if note:
+            note.archived = True
+            note.save()
+            return note.to_dict()
+        # else...

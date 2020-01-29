@@ -8,7 +8,7 @@ export class ArchiveButton extends React.Component<{ note: INote }> {
 
   archiveNote = async (e: React.MouseEvent) => {
     e.preventDefault;
-    let url = "/api/1/notes/" + this.props.note.id + "/archive";
+    let url = "/api/1/notes/" + this.props.note.uid + "/archive";
     let data = await fetch(url, {
       method: "POST",
       headers: {

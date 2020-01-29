@@ -1,11 +1,12 @@
 import * as React from "react";
 import mermaid from "mermaid";
 import * as debounce from "debounce";
-import { Input } from "reactstrap";
+import { Input, Row, Col } from "reactstrap";
 
 export class MermaidEditor extends React.Component {
   handleChange = debounce(
-    (value: any) => {
+    (value: string) => {
+      value = "graph LR\n" + value;
       console.log(value);
       var output = document.getElementById("output");
       try {
@@ -30,7 +31,7 @@ export class MermaidEditor extends React.Component {
     mermaid.initialize({ startOnLoad: true });
     var graphDefinition = `graph LR
         a-->b
-        b--a`;
+        b-->a`;
     mermaid.render("theGraph", graphDefinition, function(svgCode) {
       output!.innerHTML = svgCode;
     });
@@ -38,12 +39,13 @@ export class MermaidEditor extends React.Component {
 
   render() {
     return (
-      <div>
+      <>
         <Input
           type="textarea"
           onChange={e => this.handleChange(e.target.value)}
         ></Input>
-      </div>
+        <div id={"output"}></div>
+      </>
     );
   }
 }

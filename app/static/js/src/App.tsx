@@ -23,8 +23,7 @@ export default function App(): JSX.Element {
   };
 
   return (
-    <div>
-      <p>hello testing</p>
+    <>
       <Editor />
       <Container>
         <CardColumns>
@@ -38,6 +37,6 @@ export default function App(): JSX.Element {
         </CardColumns>
       </Container>
       <Pagination />
-    </div>
+    </>
   );
 }

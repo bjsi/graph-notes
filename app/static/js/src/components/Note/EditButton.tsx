@@ -22,14 +22,16 @@ export class EditButton extends React.Component<IEditButtonProps> {
 
   render() {
     return (
-      <Button
-        onClick={this.editNote}
-        disabled={this.context.state.editing.currentlyEditing ? true : false}
-        className="float-right"
-        size="sm"
-      >
-        E
-      </Button>
+      <>
+        <Button
+          onClick={this.editNote}
+          disabled={this.context.state.editing.currentlyEditing ? true : false}
+          className="float-right"
+          size="sm"
+        >
+          E
+        </Button>{" "}
+      </>
     );
   }
 }

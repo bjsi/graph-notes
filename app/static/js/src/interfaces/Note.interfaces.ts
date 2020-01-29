@@ -6,6 +6,7 @@ export interface INoteLinks {
 
 export interface INote {
   id: string;
+  uid: string;
   content: string;
   createdAt: string;
   archived: boolean;
