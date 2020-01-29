@@ -96,7 +96,7 @@ class Notes(Resource):
         params['limit'] = (params['per_page']) + 1
 
         if params['tag']:
-            tag_clause = "-[:TAGGED]->(t: Tag)"
+            tag_clause = "<-[:TAGGED]-(t: Tag)"
             query = "".join((query, tag_clause))
 
         # Add query clauses.
@@ -119,7 +119,7 @@ class Notes(Resource):
         # Return clause with pagination
         return_clause = """
                         RETURN n
-                        ORDER BY n.createdAt
+                        ORDER BY n.createdAt DESC
                         """
         pagination_clause = "SKIP $skip LIMIT $limit"
         query = " ".join((query, return_clause, pagination_clause))

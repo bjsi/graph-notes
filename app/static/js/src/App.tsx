@@ -16,6 +16,7 @@ export default function App(): JSX.Element {
   const fetchDataAction = async () => {
     const data = await fetch("/api/1/notes/");
     const dataJSON = await data.json();
+
     return dispatch({
       type: "GET_NOTES",
       payload: dataJSON
@@ -35,8 +36,9 @@ export default function App(): JSX.Element {
             );
           })}
         </CardColumns>
+        <hr />
+        <Pagination />
       </Container>
-      <Pagination />
     </>
   );
 }

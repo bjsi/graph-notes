@@ -26,10 +26,12 @@ export class EditButton extends React.Component<IEditButtonProps> {
         <Button
           onClick={this.editNote}
           disabled={this.context.state.editing.currentlyEditing ? true : false}
-          className="float-right"
+          className="float-right mb-2"
+          outline
+          color="warning"
           size="sm"
         >
-          E
+          <i className="fa fa-pencil-square-o"></i>
         </Button>{" "}
       </>
     );

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Store } from "../../Store";
 import { Button } from "reactstrap";
+import { Note } from "../Note/Note";
 
 interface IAddNoteProps {
   focusEditor(): void;
@@ -62,7 +63,8 @@ export function AddNoteButton(props: IAddNoteProps) {
 
   const addChildNote = async () => {
     if (editorHasText()) {
-      const url = state.editing.note._links.childNoteEndpoint;
+      const uid = state.editing.note.uid;
+      const url = "/api/1/notes/" + uid + "/child";
       const data = await fetch(url, {
         method: "POST",
         headers: {
@@ -80,7 +82,10 @@ export function AddNoteButton(props: IAddNoteProps) {
           visible: true
         }
       });
-      dispatch({ type: "REPLACE_NOTE", payload: dataJSON });
+      dispatch({
+        type: "REPLACE_NOTE",
+        payload: { note: dataJSON, id: state.editing.note.uid }
+      });
       dispatch({ type: "EDITING", payload: { noteId: "", editing: false } });
       dispatch({ type: "UPDATE_TEXT", payload: "" });
       props.focusEditor();

@@ -11,11 +11,11 @@ export function NoteTag(props: ITag) {
 
   const getNotesByTag = async (e: any) => {
     e.preventDefault;
-    const URL = "/api/1/notes/tags/" + props.tag;
+    const URL = "/api/1/notes/?tag=" + props.tag;
     const data = await fetch(URL);
     const dataJSON = await data.json();
     return dispatch({
-      type: "FETCH_DATA",
+      type: "GET_NOTES",
       payload: dataJSON
     });
   };

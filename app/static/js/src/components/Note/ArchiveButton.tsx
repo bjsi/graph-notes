@@ -28,10 +28,12 @@ export class ArchiveButton extends React.Component<{ note: INote }> {
       <Button
         onClick={this.archiveNote}
         disabled={this.context.state.editing.currentlyEditing ? true : false}
-        className="float-right ml-auto"
+        className="float-right mb-2"
+        outline
+        color="danger"
         size="sm"
       >
-        A
+        <i className="fa fa-times"></i>
       </Button>
     );
   }

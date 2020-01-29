@@ -29,8 +29,15 @@ export function Note(note: INote) {
     e.preventDefault;
     let data = await fetch(note._links.parentNoteEndpoint);
     let dataJSON = await data.json();
-    return;
+    return dispatch({
+      type: "REPLACE_NOTE",
+      payload: {
+        note: dataJSON,
+        id: note.id
+      }
+    });
   };
+
   const getChildNote = async () => {
     let data = await fetch(note._links.childNoteEndpoint);
     let dataJSON = await data.json();
@@ -38,7 +45,7 @@ export function Note(note: INote) {
       type: "REPLACE_NOTE",
       payload: {
         note: dataJSON,
-        replaceId: note.id
+        id: note.id
       }
     });
   };
@@ -59,48 +66,46 @@ export function Note(note: INote) {
       }
     >
       <CardHeader style={{ fontSize: 18 }}>
-        {note.createdAt.substr(0, 10)}
-        <ArchiveButton note={note} />
-        <EditButton note={note} />
+        <>
+          {note.createdAt.substr(0, 10)}
+          <ArchiveButton note={note} />
+          <EditButton note={note} />
+        </>
       </CardHeader>
       <CardBody>
         <ReactMarkdown renderers={{}} source={note.content}></ReactMarkdown>
         <hr />
-        <small>Source: </small>
-        <span>
-          <p>
-            <i className="fa fa-tags"></i>:{" "}
-          </p>
-        </span>
+        <div>
+          <small>Source: </small>
+        </div>
+        <small>
+          <i className="fa fa-tags"></i>:{" "}
+        </small>
         <span>
           <NoteTags note={note}></NoteTags>
         </span>
       </CardBody>
       <CardFooter>
-        <Row>
+        <>
           <Button
             onClick={getParentNote}
             size="sm"
-            className={
-              "float-left" +
-              " " +
-              (note._links.parentNoteEndpoint ? "" : "disabled")
-            }
+            outline
+            className={"float-left mb-2"}
+            {...(note._links.parentNoteEndpoint ? "" : "disabled")}
           >
-            Parent
+            <i className="fa fa-long-arrow-up"></i> Parent
           </Button>{" "}
           <Button
+            outline
             onClick={getChildNote}
             size="sm"
-            className={
-              "float-right" +
-              " " +
-              (note._links.childNoteEndpoint ? "" : "disabled")
-            }
+            className={"float-right mb-2"}
+            {...(note._links.childNoteEndpoint ? "" : "disabled")}
           >
-            Child
+            <i className="fa fa-long-arrow-down"></i> Child
           </Button>
-        </Row>
+        </>
       </CardFooter>
     </Card>
   );

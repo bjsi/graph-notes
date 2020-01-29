@@ -96,14 +96,10 @@ function reducer(state: IState, action: IAction) {
         notes: state.notes.filter(note => note.id != action.payload.id)
       };
     case "REPLACE_NOTE":
-      var newState = { ...state };
-      newState.notes.forEach((note: INote, index: number) => {
-        if ((note.id = action.payload.replaceId)) {
-          newState.notes.splice(index, 1, action.payload.note);
-        }
-      });
+      let index = state.notes.findIndex(note => note.id === action.payload.id);
       return {
-        ...newState
+        ...state,
+        notes: state.notes.splice(index, 1, action.payload.note)
       };
     case "ADD_NOTE":
       return {

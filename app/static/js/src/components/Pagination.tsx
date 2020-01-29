@@ -40,10 +40,10 @@ export function Pagination(): JSX.Element {
   return (
     <>
       <div className="text-center">
-        <p>
+        <small>
           Current page: {state.paginationInfo.currentPage} | Items per page:{" "}
           {state.paginationInfo.itemsPerPage}
-        </p>
+        </small>
       </div>
       <div className="text-center">
         <span>
